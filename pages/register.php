@@ -17,22 +17,32 @@ unset($_SESSION['flash_message']);
     <title>Register | Smart Daily Expense Planner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { min-height: 100vh; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); }
-        .auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
-        .auth-card { width: 100%; max-width: 440px; border: 0; border-radius: 24px; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25); }
-        .auth-badge { width: 58px; height: 58px; border-radius: 18px; background: rgba(29, 78, 216, 0.1); display: inline-flex; align-items: center; justify-content: center; color: #1d4ed8; }
-    </style>
+        *{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}body{min-height:100vh;background:#f4f5f7;color:#1f2430}
+        .auth-shell{min-height:100vh;display:grid;place-items:center;padding:1.5rem}
+        .auth-card{width:100%;max-width:460px;border:1px solid #e3e5e9;border-radius:10px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);background:#fff}
+        .auth-badge{width:52px;height:52px;border-radius:10px;background:#1f2430;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+        .auth-badge i{font-size:1.15rem}.auth-title{font-size:1.15rem;font-weight:600;color:#1f2430;letter-spacing:-.01em}
+        .auth-subtitle{font-size:.85rem;color:#6b7280}.form-label{font-size:.82rem;font-weight:500;color:#374151;margin-bottom:.35rem}
+        .form-control{border:1px solid #d8dade;border-radius:6px;padding:.6rem .8rem;font-size:.92rem;background:#fcfcfd;transition:border-color .15s ease,box-shadow .15s ease}
+        .form-control:focus{border-color:#9ca3af;box-shadow:0 0 0 3px rgba(31,36,48,.06);background:#fff}
+        .btn-corporate{background:#1f2430;border:1px solid #1f2430;color:#fff;border-radius:6px;font-size:.92rem;font-weight:500;padding:.65rem;transition:background .15s ease}
+        .btn-corporate:hover{background:#333a4a;color:#fff}.auth-link{font-size:.85rem;color:#6b7280;text-decoration:none;border-bottom:1px solid transparent}
+        .auth-link:hover{color:#1f2430;border-bottom-color:#1f2430}
+        .divider-text{font-size:.72rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em}.alert{border-radius:6px;font-size:.85rem;border:1px solid transparent}
+        .invalid-feedback{font-size:.78rem}</style>
 </head>
 <body>
 <div class="auth-shell">
     <div class="card auth-card">
         <div class="card-body p-4 p-md-5">
             <div class="d-flex align-items-center gap-3 mb-4">
-                <div class="auth-badge"><i class="fa-solid fa-user-plus fs-4"></i></div>
+                <div class="auth-badge"><i class="fa-solid fa-user-plus"></i></div>
                 <div>
-                    <h1 class="h4 mb-1">Buat Akun</h1>
-                    <p class="text-muted mb-0">Daftar untuk mulai memakai aplikasi</p>
+                    <h1 class="auth-title mb-1">Buat Akun</h1>
+                    <p class="auth-subtitle mb-0">Daftar untuk mulai memakai aplikasi</p>
                 </div>
             </div>
 
@@ -68,11 +78,17 @@ unset($_SESSION['flash_message']);
                     <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" required>
                     <div class="invalid-feedback">Konfirmasi password wajib diisi.</div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 py-2">Daftar</button>
+                <button type="submit" class="btn btn-corporate w-100 mt-2">Daftar</button>
             </form>
 
-            <div class="text-center mt-3">
-                <a href="login.php">Sudah punya akun? Login</a>
+            <div class="d-flex align-items-center gap-2 my-4">
+                <div class="flex-grow-1 border-top"></div>
+                <span class="divider-text">atau</span>
+                <div class="flex-grow-1 border-top"></div>
+            </div>
+
+            <div class="text-center">
+                <a href="login.php" class="auth-link">Sudah punya akun? <strong>Login</strong></a>
             </div>
         </div>
     </div>
