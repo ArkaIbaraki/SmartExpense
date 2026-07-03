@@ -29,7 +29,6 @@ $roleColors = [
 ];
 $roleBreakdown = array_map(static function (array $row) use ($totalUsers, $roleColors): array {
     $percentage = $totalUsers > 0 ? ((int) $row['total'] / $totalUsers) * 100 : 0.0;
-
     return [
         'role' => $row['role'],
         'total' => (int) $row['total'],
