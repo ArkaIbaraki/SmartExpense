@@ -9,8 +9,9 @@ require_once __DIR__ . '/../classes/Expense.php';
 require_once __DIR__ . '/../classes/Statistics.php';
 require_once __DIR__ . '/../classes/Category.php';
 
-$expenseModel = new Expense();
-$statisticsModel = new Statistics();
+$currentUser = auth_current_user();
+$expenseModel = new Expense((int) $currentUser['id']);
+$statisticsModel = new Statistics((int) $currentUser['id']);
 
 $pageTitle = 'Dashboard';
 $activePage = 'dashboard';

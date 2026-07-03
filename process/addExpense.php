@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../classes/Expense.php';
 require_once __DIR__ . '/../classes/Category.php';
 require_once __DIR__ . '/../includes/auth.php';
+$currentUser = auth_current_user();
 auth_require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -64,7 +65,7 @@ if (Category::findById($categoryId) === null) {
 }
 
 try {
-    $expenseModel = new Expense();
+    $expenseModel = new Expense((int) $currentUser['id']);
     $expenseModel->create([
         'category_id' => $categoryId,
         'name' => $name,

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 
+if (file_exists(__DIR__ . '/installed.lock')) {
+    header('Location: pages/login.php');
+    exit;
+}
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
@@ -44,8 +48,8 @@ function importSqlFile(PDO $connection, string $sqlFilePath): void
 
     $sqlContent = str_replace(
         [
-            'CREATE DATABASE IF NOT EXISTS smart_daily_expense_planner',
-            'USE smart_daily_expense_planner;',
+            'CREATE DATABASE IF NOT EXISTS smartexpense',
+            'USE smartexpense;',
         ],
         [
             'CREATE DATABASE IF NOT EXISTS `' . DB_NAME . '`',

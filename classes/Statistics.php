@@ -5,37 +5,74 @@ declare(strict_types=1);
 require_once __DIR__ . '/Database.php';
 
 /**
- * Menghitung statistik dan insight pengeluaran.
+ * Menghitung statistik dan insight pengeluaran milik satu user tertentu.
  */
 class Statistics
 {
     private PDO $connection;
+    private ?int $userId;
 
-    public function __construct(?PDO $connection = null)
+    public function __construct(?int $userId = null, ?PDO $connection = null)
     {
         $this->connection = $connection ?? Database::getInstance()->getConnection();
+        $this->userId = $userId;
     }
 
     public function getTotalTransactions(): int
     {
-        return (int) $this->connection->query('SELECT COUNT(*) FROM expenses')->fetchColumn();
+        $sql = 'SELECT COUNT(*) FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
+
+        return (int) $statement->fetchColumn();
     }
 
     public function getTotalExpenseAmount(): float
     {
-        return (float) $this->connection->query('SELECT COALESCE(SUM(amount), 0) FROM expenses')->fetchColumn();
+        $sql = 'SELECT COALESCE(SUM(amount), 0) FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
+
+        return (float) $statement->fetchColumn();
     }
 
     public function getCategoryBreakdown(): array
     {
-        $sql = 'SELECT c.id, c.name, c.icon, c.color,
+        // Pakai kondisi user di ON clause (bukan WHERE) supaya kategori
+        // yang belum dipakai user ini tetap muncul dengan total 0,
+        // bukan malah hilang gara-gara LEFT JOIN jadi kayak INNER JOIN.
+        $joinCondition = 'e.category_id = c.id';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $joinCondition .= ' AND e.user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql = "SELECT c.id, c.name, c.icon, c.color,
                        COALESCE(SUM(e.amount), 0) AS total_amount,
                        COUNT(e.id) AS total_transactions
                 FROM categories c
-                LEFT JOIN expenses e ON e.category_id = c.id
+                LEFT JOIN expenses e ON {$joinCondition}
                 GROUP BY c.id, c.name, c.icon, c.color
-                ORDER BY total_amount DESC, c.name ASC';
-        $statement = $this->connection->query($sql);
+                ORDER BY total_amount DESC, c.name ASC";
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
         $rows = $statement->fetchAll();
 
         $grandTotal = array_sum(array_map(static fn (array $row): float => (float) $row['total_amount'], $rows));
@@ -53,10 +90,18 @@ class Statistics
     {
         $sql = 'SELECT e.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color
                 FROM expenses e
-                INNER JOIN categories c ON c.id = e.category_id
-                ORDER BY e.amount DESC, e.expense_date DESC
-                LIMIT 1';
-        $statement = $this->connection->query($sql);
+                INNER JOIN categories c ON c.id = e.category_id';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE e.user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= ' ORDER BY e.amount DESC, e.expense_date DESC LIMIT 1';
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
         $expense = $statement->fetch();
 
         return $expense !== false ? $expense : null;
@@ -66,10 +111,18 @@ class Statistics
     {
         $sql = 'SELECT e.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color
                 FROM expenses e
-                INNER JOIN categories c ON c.id = e.category_id
-                ORDER BY e.amount ASC, e.expense_date ASC
-                LIMIT 1';
-        $statement = $this->connection->query($sql);
+                INNER JOIN categories c ON c.id = e.category_id';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE e.user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= ' ORDER BY e.amount ASC, e.expense_date ASC LIMIT 1';
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
         $expense = $statement->fetch();
 
         return $expense !== false ? $expense : null;
@@ -80,21 +133,41 @@ class Statistics
         $sql = 'SELECT COALESCE(AVG(daily_total), 0)
                 FROM (
                     SELECT expense_date, SUM(amount) AS daily_total
-                    FROM expenses
-                    GROUP BY expense_date
+                    FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= '   GROUP BY expense_date
                 ) AS daily_expenses';
-        return (float) $this->connection->query($sql)->fetchColumn();
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
+
+        return (float) $statement->fetchColumn();
     }
 
     public function getMostUsedCategory(): ?array
     {
         $sql = 'SELECT c.id, c.name, c.icon, c.color, COUNT(e.id) AS total_transactions
                 FROM categories c
-                INNER JOIN expenses e ON e.category_id = c.id
-                GROUP BY c.id, c.name, c.icon, c.color
+                INNER JOIN expenses e ON e.category_id = c.id';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' AND e.user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= ' GROUP BY c.id, c.name, c.icon, c.color
                 ORDER BY total_transactions DESC, c.name ASC
                 LIMIT 1';
-        $statement = $this->connection->query($sql);
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
         $category = $statement->fetch();
 
         return $category !== false ? $category : null;
@@ -107,12 +180,20 @@ class Statistics
                        MIN(expense_date) AS week_start,
                        MAX(expense_date) AS week_end,
                        SUM(amount) AS total_amount
-                FROM expenses
-                GROUP BY YEARWEEK(expense_date, 1)
+                FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= ' GROUP BY YEARWEEK(expense_date, 1)
                 ORDER BY week_key DESC
                 LIMIT ' . $weeks;
 
-        $statement = $this->connection->query($sql);
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
         $rows = $statement->fetchAll();
 
         foreach ($rows as &$row) {
@@ -150,11 +231,20 @@ class Statistics
     public function getWeeklyGrowthPercentage(): ?float
     {
         $sql = 'SELECT YEARWEEK(expense_date, 1) AS week_key, SUM(amount) AS total_amount
-                FROM expenses
-                GROUP BY YEARWEEK(expense_date, 1)
+                FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= ' GROUP BY YEARWEEK(expense_date, 1)
                 ORDER BY week_key DESC
                 LIMIT 2';
-        $statement = $this->connection->query($sql);
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
         $rows = $statement->fetchAll();
 
         if (count($rows) < 2) {

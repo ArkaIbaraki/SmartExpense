@@ -34,7 +34,11 @@ unset($_SESSION['flash_message']);
     <div class="card auth-card">
         <div class="card-body p-4 p-md-5">
             <div class="d-flex align-items-center gap-3 mb-4">
-                <div class="auth-badge"><i class="fa-solid fa-wallet"></i></div>
+                <img src="../assets/images/logo-smart-expense.png"
+                    alt="Smart Expense Logo"
+                    width="50"
+                    height="50"
+                    class="img-fluid">
                 <div>
                     <h1 class="auth-title mb-1">Smart Expense</h1>
                     <p class="auth-subtitle mb-0">Masuk ke dashboard pengeluaran</p>

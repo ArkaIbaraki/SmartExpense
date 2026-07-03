@@ -11,7 +11,8 @@ require_once __DIR__ . '/../classes/Category.php';
 $pageTitle = 'Statistik Pengeluaran';
 $activePage = 'statistics';
 
-$expenseModel = new Expense();
+$currentUser = auth_current_user();
+$expenseModel = new Expense((int) $currentUser['id']);
 $categories = Category::all();
 
 

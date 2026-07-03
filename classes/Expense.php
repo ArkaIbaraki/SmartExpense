@@ -5,23 +5,30 @@ declare(strict_types=1);
 require_once __DIR__ . '/Database.php';
 
 /**
- * Mengelola data pengeluaran.
+ * Mengelola data pengeluaran milik satu user tertentu.
  */
 class Expense
 {
     private PDO $connection;
+    private ?int $userId;
 
-    public function __construct(?PDO $connection = null)
+    public function __construct(?int $userId = null, ?PDO $connection = null)
     {
         $this->connection = $connection ?? Database::getInstance()->getConnection();
+        $this->userId = $userId;
     }
 
     public function create(array $data): int
     {
-        $sql = 'INSERT INTO expenses (category_id, name, amount, expense_date, notes)
-                VALUES (:category_id, :name, :amount, :expense_date, :notes)';
+        if ($this->userId === null) {
+            throw new RuntimeException('User ID wajib diisi untuk membuat pengeluaran baru.');
+        }
+
+        $sql = 'INSERT INTO expenses (user_id, category_id, name, amount, expense_date, notes)
+                VALUES (:user_id, :category_id, :name, :amount, :expense_date, :notes)';
         $statement = $this->connection->prepare($sql);
         $statement->execute([
+            ':user_id' => $this->userId,
             ':category_id' => (int) $data['category_id'],
             ':name' => trim((string) $data['name']),
             ':amount' => (float) $data['amount'],
@@ -41,22 +48,37 @@ class Expense
                     expense_date = :expense_date,
                     notes = :notes
                 WHERE id = :id';
-        $statement = $this->connection->prepare($sql);
-
-        return $statement->execute([
+        $params = [
             ':id' => $id,
             ':category_id' => (int) $data['category_id'],
             ':name' => trim((string) $data['name']),
             ':amount' => (float) $data['amount'],
             ':expense_date' => $data['expense_date'],
             ':notes' => $data['notes'] !== '' ? trim((string) $data['notes']) : null,
-        ]);
+        ];
+
+        if ($this->userId !== null) {
+            $sql .= ' AND user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+
+        return $statement->execute($params);
     }
 
     public function delete(int $id): bool
     {
-        $statement = $this->connection->prepare('DELETE FROM expenses WHERE id = :id');
-        return $statement->execute([':id' => $id]);
+        $sql = 'DELETE FROM expenses WHERE id = :id';
+        $params = [':id' => $id];
+
+        if ($this->userId !== null) {
+            $sql .= ' AND user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        return $statement->execute($params);
     }
 
     public function getById(int $id): ?array
@@ -64,10 +86,18 @@ class Expense
         $sql = 'SELECT e.*, c.name AS category_name, c.icon AS category_icon, c.color AS category_color
                 FROM expenses e
                 INNER JOIN categories c ON c.id = e.category_id
-                WHERE e.id = :id
-                LIMIT 1';
+                WHERE e.id = :id';
+        $params = [':id' => $id];
+
+        if ($this->userId !== null) {
+            $sql .= ' AND e.user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $sql .= ' LIMIT 1';
+
         $statement = $this->connection->prepare($sql);
-        $statement->execute([':id' => $id]);
+        $statement->execute($params);
         $expense = $statement->fetch();
 
         return $expense !== false ? $expense : null;
@@ -80,6 +110,11 @@ class Expense
                 INNER JOIN categories c ON c.id = e.category_id';
         $conditions = [];
         $params = [];
+
+        if ($this->userId !== null) {
+            $conditions[] = 'e.user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
 
         if (!empty($filters['search'])) {
             $conditions[] = '(e.name LIKE :search1 OR e.notes LIKE :search2)';
@@ -133,26 +168,65 @@ class Expense
 
     public function countAll(): int
     {
-        return (int) $this->connection->query('SELECT COUNT(*) FROM expenses')->fetchColumn();
+        $sql = 'SELECT COUNT(*) FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
+
+        return (int) $statement->fetchColumn();
     }
 
     public function getTotalAmount(): float
     {
-        return (float) $this->connection->query('SELECT COALESCE(SUM(amount), 0) FROM expenses')->fetchColumn();
+        $sql = 'SELECT COALESCE(SUM(amount), 0) FROM expenses';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' WHERE user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
+
+        return (float) $statement->fetchColumn();
     }
 
     public function getTodayTotal(): float
     {
-        $statement = $this->connection->prepare('SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expense_date = CURDATE()');
-        $statement->execute();
+        $sql = 'SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expense_date = CURDATE()';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' AND user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
 
         return (float) $statement->fetchColumn();
     }
 
     public function getMonthTotal(): float
     {
-        $statement = $this->connection->prepare('SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE YEAR(expense_date) = YEAR(CURDATE()) AND MONTH(expense_date) = MONTH(CURDATE())');
-        $statement->execute();
+        $sql = 'SELECT COALESCE(SUM(amount), 0) FROM expenses
+                WHERE YEAR(expense_date) = YEAR(CURDATE()) AND MONTH(expense_date) = MONTH(CURDATE())';
+        $params = [];
+
+        if ($this->userId !== null) {
+            $sql .= ' AND user_id = :user_id';
+            $params[':user_id'] = $this->userId;
+        }
+
+        $statement = $this->connection->prepare($sql);
+        $statement->execute($params);
 
         return (float) $statement->fetchColumn();
     }

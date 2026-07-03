@@ -1,11 +1,11 @@
 -- Database schema for Smart Daily Expense Planner
 -- Import file ini ke MySQL/phpMyAdmin di XAMPP.
 
-CREATE DATABASE IF NOT EXISTS smart_daily_expense_planner
+CREATE DATABASE IF NOT EXISTS smartexpense
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE smart_daily_expense_planner;
+USE smartexpense;
 
 CREATE TABLE IF NOT EXISTS categories (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -14,24 +14,6 @@ CREATE TABLE IF NOT EXISTS categories (
   color VARCHAR(20) DEFAULT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS expenses (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  category_id INT UNSIGNED NOT NULL,
-  name VARCHAR(150) NOT NULL,
-  amount DECIMAL(15,2) NOT NULL,
-  expense_date DATE NOT NULL,
-  notes TEXT DEFAULT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_expenses_category
-    FOREIGN KEY (category_id) REFERENCES categories (id)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
-  INDEX idx_expenses_category_id (category_id),
-  INDEX idx_expenses_expense_date (expense_date),
-  INDEX idx_expenses_created_at (created_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -43,6 +25,30 @@ CREATE TABLE IF NOT EXISTS users (
   password VARCHAR(255) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  category_id INT UNSIGNED NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  expense_date DATE NOT NULL,
+  notes TEXT DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_expenses_user
+    FOREIGN KEY (user_id) REFERENCES users (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
+  CONSTRAINT fk_expenses_category
+    FOREIGN KEY (category_id) REFERENCES categories (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+  INDEX idx_expenses_user_id (user_id),
+  INDEX idx_expenses_category_id (category_id),
+  INDEX idx_expenses_expense_date (expense_date),
+  INDEX idx_expenses_created_at (created_at)
 ) ENGINE=InnoDB;
 
 INSERT INTO categories (name, icon, color) VALUES

@@ -8,7 +8,8 @@ auth_require_login();
 require_once __DIR__ . '/../classes/Category.php';
 require_once __DIR__ . '/../classes/Expense.php';
 
-$expenseModel = new Expense();
+$currentUser = auth_current_user();
+$expenseModel = new Expense((int) $currentUser['id']);
 $pageTitle = 'Riwayat Pengeluaran';
 $activePage = 'history';
 

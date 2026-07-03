@@ -1,8 +1,12 @@
 <?php $currentUser = auth_current_user(); ?>
 <aside class="sd-sidebar p-3 p-lg-4">
     <div class="sd-brand d-flex align-items-center gap-3 mb-4">
-        <div class="rounded-4 bg-white bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-            <i class="fa-solid fa-wallet fs-4"></i>
+        <div class="d-inline-flex align-items-center justify-content-center">
+            <img src="../assets/images/logo-smart-expense.png"
+                alt="Smart Expense Logo"
+                width="50"
+                height="50"
+                class="img-fluid">
         </div>
         <div class="sd-brand-text">
             <div class="fw-bold">Smart Expense</div>
