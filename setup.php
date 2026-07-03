@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 
-if (file_exists(__DIR__ . '/installed.lock')) {
-    header('Location: pages/login.php');
-    exit;
-}
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
 /**
- * Script setup satu kali untuk membuat database, tabel, dan data awal.
- * Jalankan file ini lewat browser saat pertama kali instalasi.
+ * Script setup untuk membuat ULANG (reset) database, tabel, dan data awal
+ * setiap kali file ini dijalankan lewat browser.
+ *
+ * PERINGATAN: seluruh data lama (users, expenses, dll) akan DIHAPUS TOTAL
+ * setiap kali script ini dieksekusi. Jangan taruh file ini di production
+ * tanpa proteksi tambahan (mis. cek environment, hapus setelah dipakai,
+ * atau lindungi dengan auth).
  */
 
 function createServerConnection(): PDO
@@ -46,17 +47,11 @@ function importSqlFile(PDO $connection, string $sqlFilePath): void
         throw new RuntimeException('File database.sql tidak dapat dibaca.');
     }
 
-    $sqlContent = str_replace(
-        [
-            'CREATE DATABASE IF NOT EXISTS smartexpense',
-            'USE smartexpense;',
-        ],
-        [
-            'CREATE DATABASE IF NOT EXISTS `' . DB_NAME . '`',
-            'USE `' . DB_NAME . '`;',
-        ],
-        $sqlContent
-    );
+    // Ganti semua kemunculan nama database di file SQL dengan DB_NAME dari
+    // config, apa pun bentuk statement-nya (DROP/CREATE/USE, dengan atau
+    // tanpa IF NOT EXISTS/IF EXISTS). Pendekatan literal str_replace yang
+    // lama gampang berhenti bekerja begitu isi database.sql diubah.
+    $sqlContent = str_ireplace('smartexpense', DB_NAME, $sqlContent);
 
     $sqlContent = preg_replace('/^--.*$/m', '', $sqlContent) ?? $sqlContent;
     $statements = array_filter(array_map('trim', explode(';', $sqlContent)));
@@ -111,14 +106,18 @@ function ensureUsersRoleColumn(PDO $connection): void
 }
 
 try {
+    // Import lewat koneksi SERVER (tanpa dbname terpasang), bukan koneksi
+    // yang sudah nempel ke database "smartexpense". database.sql berisi
+    // DROP DATABASE + CREATE DATABASE + USE sendiri, jadi kalau dieksekusi
+    // lewat koneksi yang current database-nya adalah database yang sedang
+    // di-DROP, ini bisa bikin statement berikutnya gagal/tidak konsisten
+    // tergantung driver.
     $serverConnection = createServerConnection();
-    $serverConnection->exec(sprintf(
-        'CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
-        DB_NAME
-    ));
+    importSqlFile($serverConnection, __DIR__ . '/database.sql');
 
+    // Buka koneksi baru yang sudah terarah ke database (yang baru saja
+    // dibuat ulang) untuk langkah-langkah selanjutnya.
     $appConnection = createAppConnection();
-    importSqlFile($appConnection, __DIR__ . '/database.sql');
     ensureUsersRoleColumn($appConnection);
     seedDefaultAdmin($appConnection);
 

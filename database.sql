@@ -1,13 +1,17 @@
 -- Database schema for Smart Daily Expense Planner
 -- Import file ini ke MySQL/phpMyAdmin di XAMPP.
+-- PERINGATAN: Script ini akan MENGHAPUS TOTAL database "smartexpense"
+-- beserta seluruh isinya setiap kali dijalankan, lalu membuatnya ulang dari nol.
 
-CREATE DATABASE IF NOT EXISTS smartexpense
+DROP DATABASE IF EXISTS smartexpense;
+
+CREATE DATABASE smartexpense
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
 USE smartexpense;
 
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE categories (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,
   icon VARCHAR(50) DEFAULT NULL,
@@ -16,7 +20,7 @@ CREATE TABLE IF NOT EXISTS categories (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   username VARCHAR(50) NOT NULL UNIQUE,
@@ -27,7 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS expenses (
+CREATE TABLE expenses (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id INT UNSIGNED NOT NULL,
   category_id INT UNSIGNED NOT NULL,
@@ -60,7 +64,4 @@ INSERT INTO categories (name, icon, color) VALUES
   ('Kesehatan', 'fa-notes-medical', '#dc3545'),
   ('Pendidikan', 'fa-book', '#198754'),
   ('Tagihan', 'fa-file-invoice-dollar', '#6c757d'),
-  ('Lainnya', 'fa-ellipsis', '#343a40')
-ON DUPLICATE KEY UPDATE
-  icon = VALUES(icon),
-  color = VALUES(color);
+  ('Lainnya', 'fa-ellipsis', '#343a40');
