@@ -392,10 +392,17 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     </p>
                 </div>
 
-                <span class="badge-soft">
-                    <?php echo $months[$selectedMonth]; ?>
-                    <?php echo $selectedYear; ?>
-                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge-soft">
+                        <?php echo $months[$selectedMonth]; ?>
+                        <?php echo $selectedYear; ?>
+                    </span>
+
+                    <a href="../process/exportStatisticsPDF.php?month=<?php echo $selectedMonth; ?>&year=<?php echo $selectedYear; ?>"
+                       class="btn btn-filter">
+                        <i class="fa-solid fa-file-pdf me-1"></i> Export PDF
+                    </a>
+                </div>
 
             </div>
 

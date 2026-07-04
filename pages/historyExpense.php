@@ -52,6 +52,16 @@ foreach ($expenses as $expense) {
 $queryWithoutPage = $_GET;
 unset($queryWithoutPage['page']);
 
+// URL export PDF, ikut filter yang sedang aktif (search/date_from/date_to/category_id
+// adalah nama parameter yang dipakai oleh process/exportHistoryPDF.php)
+$exportParams = array_filter([
+    'search' => $keyword,
+    'category_id' => $categoryId ?: null,
+    'date_from' => $startDate,
+    'date_to' => $endDate,
+]);
+$exportUrl = '../process/exportHistoryPDF.php' . ($exportParams !== [] ? '?' . http_build_query($exportParams) : '');
+
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/sidebar.php';
 ?>
@@ -369,6 +379,12 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     </a>
                 </div>
             </form>
+
+            <div class="mb-4">
+                <a href="<?php echo htmlspecialchars($exportUrl, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-light border">
+                    <i class="fa-solid fa-file-pdf me-1"></i> Export PDF
+                </a>
+            </div>
 
             <!-- Summary -->
             <div class="row sd-summary g-3">
