@@ -255,6 +255,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         justify-content: center;
         font-size: 0.85rem;
         transition: background .15s ease, color .15s ease, border-color .15s ease;
+        cursor: pointer;
     }
 
     .dsh .sd-action-btn:hover {
@@ -321,6 +322,65 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
     .dsh .alert-danger {
         border-left-color: #B3403A;
+    }
+
+    /* Modal Edit */
+    .dsh .modal-content {
+        border: 1px solid var(--dsh-border);
+        border-radius: var(--dsh-radius);
+    }
+
+    .dsh .modal-header {
+        border-bottom: 1px solid var(--dsh-border);
+        padding: 1.1rem 1.4rem;
+    }
+
+    .dsh .modal-title {
+        font-family: 'Fraunces', Georgia, serif;
+        font-weight: 500;
+        font-size: 1.25rem;
+        color: var(--dsh-ink);
+    }
+
+    .dsh .modal-body {
+        padding: 1.4rem;
+    }
+
+    .dsh .modal-footer {
+        border-top: 1px solid var(--dsh-border);
+        padding: 1rem 1.4rem;
+    }
+
+    /* Modal Konfirmasi Hapus */
+    .dsh .sd-delete-modal .modal-body p {
+        font-size: 0.9rem;
+    }
+
+    .dsh .sd-delete-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background-color: #FBEAE9;
+        color: #B3403A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .dsh .sd-btn-danger {
+        background: #B3403A;
+        border: 1px solid #B3403A;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.88rem;
+        transition: background .15s ease, border-color .15s ease;
+    }
+
+    .dsh .sd-btn-danger:hover {
+        background: #952F2A;
+        border-color: #952F2A;
+        color: #fff;
     }
 </style>
 
@@ -430,15 +490,29 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                     <td class="text-end sd-amount">Rp<?php echo number_format((float) $expense['amount'], 0, ',', '.'); ?></td>
                                     <td class="text-center">
                                         <div class="d-inline-flex gap-1">
-                                            <a href="editExpense.php?id=<?php echo (int) $expense['id']; ?>" class="sd-action-btn" title="Edit">
+                                            <button type="button"
+                                                    class="sd-action-btn btn-edit"
+                                                    title="Edit"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editExpenseModal"
+                                                    data-id="<?php echo (int) $expense['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars((string) $expense['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    data-category-id="<?php echo (int) ($expense['category_id'] ?? 0); ?>"
+                                                    data-date="<?php echo htmlspecialchars((string) $expense['expense_date'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    data-amount="<?php echo (float) $expense['amount']; ?>"
+                                                    data-notes="<?php echo htmlspecialchars((string) ($expense['notes'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                                                 <i class="fa-solid fa-pen"></i>
-                                            </a>
-                                            <a href="../process/deleteExpense.php?id=<?php echo (int) $expense['id']; ?>"
-                                               class="sd-action-btn danger"
-                                               title="Hapus"
-                                               onclick="return confirm('Hapus data pengeluaran ini?');">
+                                            </button>
+                                            <button type="button"
+                                                    class="sd-action-btn danger btn-delete"
+                                                    title="Hapus"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteExpenseModal"
+                                                    data-id="<?php echo (int) $expense['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars((string) $expense['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    data-amount="Rp<?php echo number_format((float) $expense['amount'], 0, ',', '.'); ?>">
                                                 <i class="fa-solid fa-trash"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -476,6 +550,114 @@ require_once __DIR__ . '/../includes/sidebar.php';
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Modal Edit Expense -->
+    <div class="modal fade" id="editExpenseModal" tabindex="-1" aria-labelledby="editExpenseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content dsh">
+                <form action="../process/editExpense.php" method="post" id="editExpenseForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editExpenseModalLabel">Edit Pengeluaran</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="edit_id">
+
+                        <div class="mb-3">
+                            <label for="edit_name" class="form-label">Nama</label>
+                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_category_id" class="form-label">Kategori</label>
+                            <select class="form-select" id="edit_category_id" name="category_id" required>
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?php echo (int) $category['id']; ?>">
+                                        <?php echo htmlspecialchars((string) $category['name'], ENT_QUOTES, 'UTF-8'); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_date" class="form-label">Tanggal</label>
+                            <input type="date" class="form-control" id="edit_date" name="expense_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_amount" class="form-label">Nominal</label>
+                            <input type="number" class="form-control" id="edit_amount" name="amount" min="0" step="1" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_notes" class="form-label">Catatan</label>
+                            <textarea class="form-control" id="edit_notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn sd-btn-primary text-white">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div class="modal fade" id="deleteExpenseModal" tabindex="-1" aria-labelledby="deleteExpenseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content dsh sd-delete-modal">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body text-center pt-0">
+                    <div class="sd-delete-icon mx-auto mb-3">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h5 class="mb-2" id="deleteExpenseModalLabel">Hapus Data Pengeluaran?</h5>
+                    <p class="text-muted mb-1">
+                        Anda akan menghapus <strong id="delete_expense_name">data ini</strong>
+                        sebesar <strong id="delete_expense_amount">Rp0</strong>.
+                    </p>
+                    <p class="text-muted mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pt-0 pb-4">
+                    <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Batal</button>
+                    <a href="#" id="delete_expense_link" class="btn sd-btn-danger text-white px-4">
+                        <i class="fa-solid fa-trash me-1"></i> Ya, Hapus
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const editButtons = document.querySelectorAll('.btn-edit');
+
+    editButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.getElementById('edit_id').value = btn.dataset.id;
+            document.getElementById('edit_name').value = btn.dataset.name;
+            document.getElementById('edit_category_id').value = btn.dataset.categoryId;
+            document.getElementById('edit_date').value = btn.dataset.date;
+            document.getElementById('edit_amount').value = btn.dataset.amount;
+            document.getElementById('edit_notes').value = btn.dataset.notes;
+        });
+    });
+
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+
+    deleteButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const id = btn.dataset.id;
+            document.getElementById('delete_expense_name').textContent = btn.dataset.name;
+            document.getElementById('delete_expense_amount').textContent = btn.dataset.amount;
+            document.getElementById('delete_expense_link').href = '../process/deleteExpense.php?id=' + encodeURIComponent(id);
+        });
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
